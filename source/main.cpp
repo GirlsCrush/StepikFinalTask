@@ -9,7 +9,7 @@
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
+    if (argc < 2)
     {
         printf("Usage: ./my_daemon -h <ip> -p <port> -d <directory>\n");
         return -1;
