@@ -6,9 +6,44 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <string>
+#include <fcntl.h>
+#include <sys/epoll.h>
+
+#define MAX_EVENTS 32
+
+int set_nonblock(int fd) {
+	int flags;
+#if defined(O_NONBLOCK)
+	if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+		flags = 0;
+	return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+#else
+	flags = 1;
+	return ioctl(fd, FIOBIO, &flags);
+#endif
+}
+
+void httpHandler(int fd) {
+
+}
+
+static const char templ[] = "HTTP/1.0 200 OK\r\n"
+
+		           "Content-length: %d\r\n"
+
+		       	   "Connection: close\r\n"
+
+		       	   "Content-Type: text/html\r\n"
+
+		       	   "\r\n"
+
+		       	   "%s";
+
+static const char not_found[] = "HTTP/1.0 404 NOT FOUND\r\nContent-Type: text/html\r\n\r\n";
 
 int main(int argc, char** argv)
 {
+    
     if (argc < 2)
     {
         printf("Usage: ./my_daemon -h <ip> -p <port> -d <directory>\n");
@@ -16,9 +51,9 @@ int main(int argc, char** argv)
     }
 
     int status;
-    int pid, sid;
+    uint16_t pid, sid;
     in_addr_t inAddr;
-    int port;
+    uint16_t port;
     std::string dir;
     int rez = 0;
 
@@ -72,7 +107,7 @@ int main(int argc, char** argv)
         
         // переходим в корень диска, если мы этого не сделаем, то могут быть проблемы.
         // к примеру с размантированием дисков
-        if ((chdir("/")) < 0) {
+        if (chdir("/") < 0) {
             printf("Error: Working dir is not changed.\n");
             exit(EXIT_FAILURE);
         }
@@ -82,7 +117,53 @@ int main(int argc, char** argv)
         close(STDOUT_FILENO);
         close(STDERR_FILENO);
         
-        // Данная функция будет осуществлять слежение за процессом
+	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	
+	struct sockaddr_in SockAddr;
+	SockAddr.sin_family = AF_INET;
+	SockAddr.sin_port = port;
+	SockAddr.sin_addr.s_addr = inAddr;
+	bind(MasterSocket, (struct sockaddr*)(&SockAddr), 
+		sizeof(SockAddr));
+
+	set_nonblock(MasterSocket);
+
+	listen(MasterSocket, SOMAXCONN);
+
+	int EPoll = epoll_create1(0);
+
+	struct epoll_event Event;
+	Event.data.fd = MasterSocket;
+	Event.events = EPOLLIN;
+	epoll_ctl(EPoll, EPOLL_CTL_ADD, MasterSocket, &Event);
+	while (true) {
+		struct epoll_event Events[MAX_EVENTS];
+		int N = epoll_wait(EPoll, Events, MAX_EVENTS, -1);
+		
+		for (size_t i = 0; i < N; ++i) {
+			if (Events[i].data.fd == MasterSocket) {
+				int SlaveSocket = accept(MasterSocket, 0, 0);
+				set_nonblock(SlaveSocket);
+				
+				struct epoll_event Event;
+				Event.data.fd = SlaveSocket;
+				Event.events = EPOLLIN;
+				epoll_ctl(EPoll, EPOLL_CTL_ADD, SlaveSocket,
+					&Event);
+			} else {
+				static char Buffer[1024];
+				int RecvSize = recv(Events[i].data.fd, Buffer, 1024, 
+				MSG_NOSIGNAL);
+				if ((RecvSize == 0) && (errno != EAGAIN)) { 
+					shutdown(Events[i].data.fd, SHUT_RDWR);
+					close(Events[i].data.fd);
+				} else if (RecvSize > 0) {
+					FILE *f = fopen("http-request.txt", "w");
+					fprintf(f, "%s\n", Buffer);
+				}
+			}
+		}
+	}
         
         
         return status;
