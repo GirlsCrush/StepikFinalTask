@@ -160,6 +160,7 @@ int main(int argc, char** argv)
 				} else if (RecvSize > 0) {
 					FILE *f = fopen("http-request.txt", "w");
 					fprintf(f, "%s\n", Buffer);
+                    fclose(f);
 				}
 			}
 		}
