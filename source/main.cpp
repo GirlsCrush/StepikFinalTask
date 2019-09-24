@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     if (argc < 2)
     {
         inAddr = inet_addr("127.0.0.1");
-        port = htons(12345);
+        port = htons(80);
     } else while ((rez = getopt(argc,argv,"h:p:d:")) != -1){
 		switch (rez){
 		case 'h': 
