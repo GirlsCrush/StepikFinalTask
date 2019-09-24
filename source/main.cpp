@@ -9,6 +9,7 @@
 #include <string.h>
 #include <regex>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/epoll.h>
 
 #define MAX_EVENTS 32
@@ -31,16 +32,10 @@ typedef struct {
 	char buf[BUFFER_SIZE];
 } url_data;
 
-static const std::string templStart = "HTTP/1.0 200 OK\r\n"
-
-		           "Content-length: ";
+static const std::string templStart = "HTTP/1.0 200 OK\r\nContent-length: ";
 
 
-static const std::string templEnd = "\r\nConnection: close\r\n"
-
-		       	   "Content-Type: text/html\r\n"
-
-		       	   "\r\n";
+static const std::string templEnd = "\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n";
 
 static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-length: 0\r\nContent-Type: text/html\r\n\r\n";
 
@@ -135,6 +130,8 @@ int main(int argc, char** argv)
         // иначе у нас могут быть проблемы с правами доступа
         umask(0);
         
+        signal(SIGHUP, SIG_IGN);
+
         // создаём новый сеанс, чтобы не зависеть от родителя
         sid = setsid();
         if (sid < 0) {
