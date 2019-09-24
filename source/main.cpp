@@ -31,6 +31,19 @@ typedef struct {
 	char buf[BUFFER_SIZE];
 } url_data;
 
+static const std::string templStart = "HTTP/1.0 200 OK\r\n"
+
+		           "Content-length: ";
+
+
+static const std::string templEnd = "\r\nConnection: close\r\n"
+
+		       	   "Content-Type: text/html\r\n"
+
+		       	   "\r\n";
+
+static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-Type: text/html\r\n\r\n";
+
 void handleRequest(int fd) {
     static char buf[BUFFER_SIZE];
     bzero(buf, BUFFER_SIZE);
@@ -60,19 +73,6 @@ void handleRequest(int fd) {
 }
 
 
-
-static const std::string templStart = "HTTP/1.0 200 OK\r\n"
-
-		           "Content-length: ";
-
-
-static const std::string templEnd = "\r\nConnection: close\r\n"
-
-		       	   "Content-Type: text/html\r\n"
-
-		       	   "\r\n";
-
-static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-Type: text/html\r\n\r\n";
 
 int main(int argc, char** argv)
 {
