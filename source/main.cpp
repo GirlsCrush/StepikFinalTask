@@ -42,7 +42,7 @@ static const std::string templEnd = "\r\nConnection: close\r\n"
 
 		       	   "\r\n";
 
-static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-Type: text/html\r\n\r\n";
+static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-length: 0\r\nContent-Type: text/html\r\n\r\n";
 
 void handleRequest(int fd) {
     static char buf[BUFFER_SIZE];
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     if (argc < 2)
     {
         inAddr = inet_addr("127.0.0.1");
-        port = htons(80);
+        port = htons(12345);
     } else while ((rez = getopt(argc,argv,"h:p:d:")) != -1){
 		switch (rez){
 		case 'h': 
