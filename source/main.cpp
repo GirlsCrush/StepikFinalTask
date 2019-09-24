@@ -49,10 +49,12 @@ void handleRequest(int fd) {
     bzero(buf, BUFFER_SIZE);
 	int r = recv(fd, buf, BUFFER_SIZE, MSG_NOSIGNAL);
     std::string fileName = "/index.html";
+    
     if (r > 0) {
         std::cmatch result;
-	    std::regex reg("^(GET)[ ]([^ ]+)([ ]((HTTP/)[0-9].[0-9]))?$");
+	    std::regex reg("(GET)[ ]([^ ?]+)");
         std::regex_search(buf, result, reg);
+
         if(strlen(result[2].str().c_str()))
             fileName = result[2].str();
     } else return;
@@ -60,7 +62,7 @@ void handleRequest(int fd) {
     FILE *f = fopen(fileName.c_str(), "r");
     if (f) {
     std::string s;
-    while (feof(f)) {
+    while (!feof(f)) {
         bzero(buf, BUFFER_SIZE);        
         fgets(buf, BUFFER_SIZE, f);
         s += buf;
