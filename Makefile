@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/arther/StepikTasks/Stepik-MultiThread/StepikFinalTask
+CMAKE_SOURCE_DIR = /home/arther/StepikTasks/StepikFinalTask
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/arther/StepikTasks/Stepik-MultiThread/StepikFinalTask
+CMAKE_BINARY_DIR = /home/arther/StepikTasks/StepikFinalTask
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/arther/StepikTasks/Stepik-MultiThread/StepikFinalTask/CMakeFiles /home/arther/StepikTasks/Stepik-MultiThread/StepikFinalTask/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/arther/StepikTasks/StepikFinalTask/CMakeFiles /home/arther/StepikTasks/StepikFinalTask/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/arther/StepikTasks/Stepik-MultiThread/StepikFinalTask/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/arther/StepikTasks/StepikFinalTask/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -123,6 +123,33 @@ final/fast:
 	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/build
 .PHONY : final/fast
 
+source/http_parser.o: source/http_parser.c.o
+
+.PHONY : source/http_parser.o
+
+# target to build an object file
+source/http_parser.c.o:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/source/http_parser.c.o
+.PHONY : source/http_parser.c.o
+
+source/http_parser.i: source/http_parser.c.i
+
+.PHONY : source/http_parser.i
+
+# target to preprocess a source file
+source/http_parser.c.i:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/source/http_parser.c.i
+.PHONY : source/http_parser.c.i
+
+source/http_parser.s: source/http_parser.c.s
+
+.PHONY : source/http_parser.s
+
+# target to generate assembly for a file
+source/http_parser.c.s:
+	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/source/http_parser.c.s
+.PHONY : source/http_parser.c.s
+
 source/main.o: source/main.cpp.o
 
 .PHONY : source/main.o
@@ -159,6 +186,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... final"
 	@echo "... edit_cache"
+	@echo "... source/http_parser.o"
+	@echo "... source/http_parser.i"
+	@echo "... source/http_parser.s"
 	@echo "... source/main.o"
 	@echo "... source/main.i"
 	@echo "... source/main.s"
