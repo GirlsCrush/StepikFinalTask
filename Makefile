@@ -123,33 +123,6 @@ final/fast:
 	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/build
 .PHONY : final/fast
 
-source/http_parser.o: source/http_parser.c.o
-
-.PHONY : source/http_parser.o
-
-# target to build an object file
-source/http_parser.c.o:
-	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/source/http_parser.c.o
-.PHONY : source/http_parser.c.o
-
-source/http_parser.i: source/http_parser.c.i
-
-.PHONY : source/http_parser.i
-
-# target to preprocess a source file
-source/http_parser.c.i:
-	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/source/http_parser.c.i
-.PHONY : source/http_parser.c.i
-
-source/http_parser.s: source/http_parser.c.s
-
-.PHONY : source/http_parser.s
-
-# target to generate assembly for a file
-source/http_parser.c.s:
-	$(MAKE) -f CMakeFiles/final.dir/build.make CMakeFiles/final.dir/source/http_parser.c.s
-.PHONY : source/http_parser.c.s
-
 source/main.o: source/main.cpp.o
 
 .PHONY : source/main.o
@@ -186,9 +159,6 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... final"
 	@echo "... edit_cache"
-	@echo "... source/http_parser.o"
-	@echo "... source/http_parser.i"
-	@echo "... source/http_parser.s"
 	@echo "... source/main.o"
 	@echo "... source/main.i"
 	@echo "... source/main.s"

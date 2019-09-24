@@ -10,7 +10,6 @@
 #include <regex>
 #include <fcntl.h>
 #include <sys/epoll.h>
-#include "http_parser.h"
 
 #define MAX_EVENTS 32
 
