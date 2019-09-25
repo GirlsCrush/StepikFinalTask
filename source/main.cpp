@@ -6,14 +6,15 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <string>
+#include <set>
 #include <string.h>
 #include <regex>
 #include <fcntl.h>
 #include <signal.h>
-#include <sys/epoll.h>
+#include <poll.h>
 
 #define MAX_EVENTS 32
-
+#define POLL_SIZE 1024
 int set_nonblock(int fd) {
 	int flags;
 #if defined(O_NONBLOCK)
@@ -54,7 +55,8 @@ void handleRequest(int fd) {
         if(strlen(result[2].str().c_str()))
             fileName = result[2].str();
     } else return;
-
+    // if (fileName[0] == '/')
+    //     fileName = fileName.substr(1);
     FILE *f = fopen(fileName.c_str(), "r");
     if (f) {
     std::string s;
@@ -68,13 +70,15 @@ void handleRequest(int fd) {
     } else {
         send(fd, not_found.c_str(), strlen(not_found.c_str()), MSG_NOSIGNAL);  
     }
+    shutdown(fd, SHUT_RDWR);
+    close(fd);
 }
 
 
 
 int main(int argc, char** argv)
 {
-    signal(SIGHUP, SIG_IGN);
+    // signal(SIGHUP, SIG_IGN);
     uint16_t pid, sid;
     in_addr_t inAddr;
     uint16_t port;
@@ -100,13 +104,15 @@ int main(int argc, char** argv)
         };
 	};
     
-    daemon(0,0);
+    daemon(1,0);
 
-    if (chdir(dir.c_str()) < 0) {
+    if (dir.size() && chdir(dir.c_str()) < 0) {
         exit(EXIT_FAILURE);
     }
     
+    printf("dsfsdfsdfsf");
 	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	std::set<int> SlaveSockets;
 
 	struct sockaddr_in SockAddr;
 	SockAddr.sin_family = AF_INET;
@@ -116,29 +122,31 @@ int main(int argc, char** argv)
 		sizeof(SockAddr));
 	set_nonblock(MasterSocket);
 	listen(MasterSocket, SOMAXCONN);
-	int EPoll = epoll_create1(0);
-	struct epoll_event Event;
-	Event.data.fd = MasterSocket;
-	Event.events = EPOLLIN;
-	epoll_ctl(EPoll, EPOLL_CTL_ADD, MasterSocket, &Event);
+	
+	struct pollfd Set[POLL_SIZE];
+	Set[0].fd = MasterSocket;
+	Set[0].events = POLLIN;
 	while (true) {
-		struct epoll_event Events[MAX_EVENTS];
-		int N = epoll_wait(EPoll, Events, MAX_EVENTS, -1);
+		unsigned int index = 1;
+		for (auto iter = SlaveSockets.begin(); 
+			iter != SlaveSockets.end(); ++iter, ++index){
+			Set[index].fd = *iter;
+			Set[index].events = POLLIN;
+		}
+		size_t setSize = 1 + SlaveSockets.size();
 
-		for (size_t i = 0; i < N; ++i) {
-			if (Events[i].data.fd == MasterSocket) {
-				int SlaveSocket = accept(MasterSocket, 0, 0);
-				set_nonblock(SlaveSocket);
-
-				struct epoll_event Event;
-				Event.data.fd = SlaveSocket;
-				Event.events = EPOLLIN;
-				epoll_ctl(EPoll, EPOLL_CTL_ADD, SlaveSocket,
-					&Event);
-			} else {
-				handleRequest(Events[i].data.fd);
-                shutdown(Events[i].data.fd, SHUT_RDWR);
-				close(Events[i].data.fd);
+		poll(Set, setSize, -1);
+		
+		for (size_t i = 0; i < setSize; ++i) {
+			if (Set[i].revents & POLLIN) {
+				if (i) {
+					handleRequest(Set[i].fd);
+                    SlaveSockets.erase(Set[i].fd);
+				} else {
+					int SlaveSocket = accept(MasterSocket, 0, 0);
+					set_nonblock(SlaveSocket);
+					SlaveSockets.insert(SlaveSocket);
+				}
 			}
 		}
 	}
