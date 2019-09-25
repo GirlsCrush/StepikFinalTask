@@ -1,3 +1,8 @@
+#include <string>
+#include <thread>
+#include <set>
+#include <regex>
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>    
@@ -5,16 +10,27 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <string>
-#include <set>
 #include <string.h>
-#include <regex>
 #include <fcntl.h>
 #include <signal.h>
 #include <poll.h>
 
 #define MAX_EVENTS 32
 #define POLL_SIZE 1024
+#define BUFFER_SIZE 1024
+
+
+typedef struct {
+	char buf[BUFFER_SIZE];
+} url_data;
+
+static const std::string templStart = "HTTP/1.0 200 OK\r\nContent-length: ";
+
+static const std::string templEnd = "\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n";
+
+static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-length: 0\r\nContent-Type: text/html\r\n\r\n";
+
+
 int set_nonblock(int fd) {
 	int flags;
 #if defined(O_NONBLOCK)
@@ -26,19 +42,6 @@ int set_nonblock(int fd) {
 	return ioctl(fd, FIOBIO, &flags);
 #endif
 }
-
-#define BUFFER_SIZE 1024
-
-typedef struct {
-	char buf[BUFFER_SIZE];
-} url_data;
-
-static const std::string templStart = "HTTP/1.0 200 OK\r\nContent-length: ";
-
-
-static const std::string templEnd = "\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n";
-
-static const std::string not_found = "HTTP/1.0 404 NOT FOUND\r\nContent-length: 0\r\nContent-Type: text/html\r\n\r\n";
 
 void handleRequest(int fd) {
     static char buf[BUFFER_SIZE];
@@ -55,8 +58,6 @@ void handleRequest(int fd) {
         if(strlen(result[2].str().c_str()))
             fileName = result[2].str();
     } else return;
-    // if (fileName[0] == '/')
-    //     fileName = fileName.substr(1);
     FILE *f = fopen(fileName.c_str(), "r");
     if (f) {
     std::string s;
@@ -73,7 +74,6 @@ void handleRequest(int fd) {
     shutdown(fd, SHUT_RDWR);
     close(fd);
 }
-
 
 
 int main(int argc, char** argv)
@@ -110,7 +110,6 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
     
-    printf("dsfsdfsdfsf");
 	int MasterSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	std::set<int> SlaveSockets;
 
@@ -128,8 +127,8 @@ int main(int argc, char** argv)
 	Set[0].events = POLLIN;
 	while (true) {
 		unsigned int index = 1;
-		for (auto iter = SlaveSockets.begin(); 
-			iter != SlaveSockets.end(); ++iter, ++index){
+		for (auto iter = SlaveSockets.begin();
+			iter != SlaveSockets.end(); ++iter, ++index) {
 			Set[index].fd = *iter;
 			Set[index].events = POLLIN;
 		}
@@ -140,7 +139,8 @@ int main(int argc, char** argv)
 		for (size_t i = 0; i < setSize; ++i) {
 			if (Set[i].revents & POLLIN) {
 				if (i) {
-					handleRequest(Set[i].fd);
+                    std::thread th(handleRequest,Set[i].fd);
+                    th.detach();
                     SlaveSockets.erase(Set[i].fd);
 				} else {
 					int SlaveSocket = accept(MasterSocket, 0, 0);
